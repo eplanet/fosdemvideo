@@ -8,6 +8,22 @@ import concurrent.futures
 
 URL_TEMPLATE = "https://fosdem.org/%d/schedule/xml"
 
+def report_hook(blocknum, blocksize, totalsize):
+    readsofar = blocknum * blocksize
+    if totalsize > 0:
+        percent = readsofar * 1e2 / totalsize
+        s = "\r%5.1f%% %*d / %d" % (
+            percent, len(str(totalsize)), readsofar, totalsize)
+        sys.stderr.write(s)
+        if readsofar >= totalsize: # near the end
+            sys.stderr.write("\n")
+    else: # total size is unknown
+        sys.stderr.write("read %d\n" % (readsofar,))
+
+def retrieve_video(url, path):
+    logging.info("Currently retrieving '%s' into '%s'" % (url, path))
+    urllib.request.urlretrieve(url, path, report_hook)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FOSDEM video crawler")
     parser.add_argument("--output", help="Output directory", required=True)
@@ -18,7 +34,7 @@ if __name__ == "__main__":
     parser.add_argument("--jobs", type=int, default=1,
             help="Number of threads (default: %(default)s)")
     args = parser.parse_args(sys.argv[1:])
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     if args.output is None or not os.path.exists(args.output):
         logging.error("Provided output '%s' does not exist" % (args.output))
@@ -44,4 +60,4 @@ if __name__ == "__main__":
                 logging.warn("Target file already exists: %s" % (target_filepath))
             else:
                 logging.debug("Saving to: %s" % (target_filepath))
-                e.submit(urllib.request.urlretrieve, video_url, target_filepath)
+                e.submit(retrieve_video, video_url, target_filepath)
