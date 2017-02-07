@@ -33,6 +33,8 @@ if __name__ == "__main__":
             help="Extension for video download (default: %(default)s)")
     parser.add_argument("--jobs", type=int, default=1,
             help="Number of threads (default: %(default)s)")
+    parser.add_argument("--dry-run", action='store_true',
+            help="Performs a dry run with given parameters (default: %(default)s)")
     args = parser.parse_args(sys.argv[1:])
     logging.basicConfig(level=logging.INFO)
 
@@ -57,7 +59,10 @@ if __name__ == "__main__":
             if not os.path.exists(target_path):
                 os.makedirs(target_path)
             if os.path.exists(target_filepath):
-                logging.warn("Target file already exists: %s" % (target_filepath))
+                logging.debug("Target file already exists: %s" % (target_filepath))
             else:
                 logging.debug("Saving to: %s" % (target_filepath))
-                e.submit(retrieve_video, video_url, target_filepath)
+                if not args.dry_run:
+                    e.submit(retrieve_video, video_url, target_filepath)
+                else:
+                    logging.info("[dry-run] '%s' would be saved in '%s'" % (video_url, target_filepath))
