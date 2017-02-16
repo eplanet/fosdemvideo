@@ -49,7 +49,7 @@ if __name__ == "__main__":
     ns = {"re": "http://exslt.org/regular-expressions"}
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=args.jobs) as e:
-        for video_url in doc.xpath(r"//link[re:test(@href, '\.(?:mp4)', 'i')]/@href",
+        for video_url in doc.xpath(r"//link[re:test(@href, '\.(?:%s)', 'i')]/@href" % (args.extension),
                 namespaces=ns, smart_strings=False):
             parsed_url = urllib.parse.urlsplit(video_url)
             target_path = os.path.join(args.output,
